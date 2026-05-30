@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Кемп Цалингийн Систем · Cloud</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --pu:#6C5CE7;--blue:#2D3561;--green:#00B894;--red:#D63031;--or:#E17055;
+  --bg:#FFF8F2;--card:#FFFFFF;--border:#F0E6DC;--text:#2D2013;--muted:#8C7B70;
+  --shadow:0 2px 8px rgba(120,80,40,.08);--radius:12px;--radius-sm:8px;
+  --warm1:#FFF0E6;--warm2:#FFE4CC;--warm3:#FFDBB5;--accent:#F39C12;
+  --hdr-bg:#2D2013;--hdr-text:#FFF8F2;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;line-height:1.5}
+.page{display:none}.page.active{display:block}
+
+/* ── HEADER ── */
+.hdr{background:var(--hdr-bg);border-bottom:none;padding:0 20px;display:flex;align-items:center;gap:12px;height:54px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(45,32,19,.25)}
+.logo{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo i{color:#fff;font-size:16px}
+.hdr-title{font-size:14px;font-weight:700;color:#FFF8F2;letter-spacing:.3px}
+.hdr-sub{font-size:11px;color:rgba(255,248,242,.55)}
+.chip{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500}
+.btn-out{margin-left:auto;padding:6px 13px;font-size:12px;font-weight:500;color:rgba(255,248,242,.7);border:1px solid rgba(255,248,242,.2);border-radius:var(--radius-sm);background:transparent;cursor:pointer;display:flex;align-items:center;gap:5px}
+.btn-out:hover{background:rgba(255,255,255,.1);color:#FFF8F2}
+
+/* ── LOGIN ── */
+.login-wrap{max-width:440px;margin:40px auto;padding:0 16px}
+.login-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px 28px;box-shadow:0 8px 32px rgba(120,80,40,.12)}
+.login-card h2{font-size:20px;font-weight:700;margin-bottom:4px}
+.login-sub{font-size:13px;color:var(--muted);margin-bottom:22px}
+.fg{margin-bottom:14px}
+.fg label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:5px}
+.fg input{width:100%;padding:10px 12px;font-size:14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--text);outline:none;transition:border .2s}
+.fg input:focus{border-color:var(--pu);box-shadow:0 0 0 3px #534AB715}
+/* code input */
+.code-inp{width:100%;padding:14px;font-size:24px;letter-spacing:5px;font-family:monospace;font-weight:700;border:2px solid var(--border);border-radius:var(--radius-sm);text-align:center;outline:none;transition:border .2s,box-shadow .2s;background:var(--card);color:var(--text)}
+.code-inp::placeholder{font-size:13px;letter-spacing:0;font-weight:400;color:#CBD5E1}
+.code-inp:focus{border-color:var(--pu);box-shadow:0 0 0 3px #534AB715}
+.code-inp.found{border-color:var(--green);box-shadow:0 0 0 3px #1D9E7520}
+.code-inp.miss{border-color:var(--red);box-shadow:0 0 0 3px #E24B4A20}
+/* preview */
+.pv{overflow:hidden;max-height:0;opacity:0;transition:max-height .3s,opacity .3s;margin-top:10px}
+.pv.show{max-height:360px;opacity:1}
+.pv-found-wrap{border:1.5px solid var(--green);border-radius:var(--radius);overflow:hidden}
+.pv-miss-wrap{border:1.5px solid var(--red);border-radius:var(--radius);padding:14px 16px;display:flex;align-items:center;gap:12px;background:#FEF2F2}
+.pv-hdr{display:flex;align-items:center;gap:12px;padding:13px 16px;background:#F0FDF4;border-bottom:1px solid #D1FAE5}
+.av{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}
+.ok-badge{margin-left:auto;background:#D1FAE5;color:#065F46;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;display:flex;align-items:center;gap:4px}
+.pv-body{padding:14px 16px;background:var(--card)}
+.mini-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;margin-bottom:14px}
+.mc{background:var(--warm1);border-radius:var(--radius-sm);padding:9px 12px;border:1px solid var(--warm2)}
+.mc .ml{font-size:10px;color:var(--muted);margin-bottom:3px}
+.mc .mv{font-size:13px;font-weight:600}
+.btn-enter{width:100%;padding:11px;background:linear-gradient(135deg,var(--green),#00CFA3);color:#fff;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .2s;box-shadow:0 3px 10px rgba(0,184,148,.3)}
+.btn-enter:hover{opacity:.9;transform:translateY(-1px)}
+/* divider */
+.or{display:flex;align-items:center;gap:10px;margin:18px 0}
+.or hr{flex:1;border:none;border-top:1px solid var(--border)}
+.or span{font-size:11px;color:var(--muted);white-space:nowrap}
+/* buttons */
+.btn-pri{width:100%;padding:11px;color:#fff;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .2s;box-shadow:0 3px 10px rgba(0,0,0,.15)}
+.btn-pri:hover{opacity:.9;transform:translateY(-1px);box-shadow:0 5px 16px rgba(0,0,0,.2)}
+.btn-sec{width:100%;padding:10px;background:transparent;color:var(--text);border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:9px}
+.btn-sec:hover{background:var(--bg)}
+.err{font-size:12px;color:var(--red);background:#FEF2F2;border:1px solid #FCA5A5;border-radius:var(--radius-sm);padding:8px 12px;margin-top:11px;display:none}
+.hint{text-align:center;font-size:11px;color:var(--muted);margin-top:12px;line-height:1.8}
+
+/* ── MAIN LAYOUT ── */
+.main{padding:16px 20px 32px;max-width:800px;margin:0 auto}
+.tab-row{display:flex;border-bottom:2px solid var(--border);background:var(--card);overflow-x:auto;position:sticky;top:54px;z-index:90;box-shadow:0 2px 6px rgba(120,80,40,.06)}
+.tab{padding:12px 16px;font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:5px;transition:all .2s;margin-bottom:-2px}
+.tab.act{color:var(--pu);border-bottom-color:var(--pu);font-weight:700}
+.tab:hover{color:var(--text);background:var(--warm1)}
+
+/* ── CARDS / ROWS ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:14px;box-shadow:0 2px 10px rgba(120,80,40,.07)}
+.card-hdr{display:flex;align-items:center;gap:10px;padding:11px 16px;background:var(--warm1);border-bottom:1px solid var(--border)}
+.card-body{padding:16px}
+.row{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--border);font-size:13px}
+.row:last-child{border-bottom:none}
+.row-label{color:var(--muted);display:flex;align-items:center;gap:6px;flex:1}
+.row-val{font-weight:600;white-space:nowrap}
+.row-val.p{color:var(--green)}.row-val.m{color:var(--red)}.row-val.o{color:var(--or)}
+.total-row{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:linear-gradient(135deg,var(--warm1),#FFF);border-top:1px solid var(--warm2);font-size:13px;font-weight:600}
+.total-val{font-size:20px;font-weight:700;color:var(--pu)}
+
+/* ── STAT GRID ── */
+.sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:16px}
+.sg{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:13px 15px;box-shadow:0 2px 8px rgba(120,80,40,.07);transition:box-shadow .2s}
+.sg:hover{box-shadow:0 4px 14px rgba(120,80,40,.12)}
+.sg .sl{font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:500;text-transform:uppercase;letter-spacing:.3px}
+.sg .sv{font-size:18px;font-weight:700}
+.sg .ss{font-size:10px;color:var(--muted);margin-top:2px}
+
+/* ── CONTROLS ── */
+.ctrl-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.ctrl-row label{font-size:12px;color:var(--muted);font-weight:500}
+select.ctrl{padding:6px 10px;font-size:12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--text);outline:none;font-weight:500}
+select.ctrl:focus{border-color:var(--pu)}
+.br-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.brtab{padding:5px 13px;font-size:12px;font-weight:500;border:1.5px solid var(--border);border-radius:20px;background:transparent;color:var(--muted);cursor:pointer;transition:all .15s}
+.brtab.act{background:var(--pu);color:#fff;border-color:var(--pu);box-shadow:0 2px 8px rgba(108,92,231,.3)}
+
+/* ── UPLOAD ── */
+.upload-zone{border:2px dashed var(--warm3);border-radius:var(--radius);padding:36px 24px;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:linear-gradient(135deg,var(--warm1) 0%,#FFF 100%)}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--pu);background:linear-gradient(135deg,#EEE8FF 0%,var(--warm1) 100%)}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{font-size:40px;color:var(--pu);margin-bottom:10px;opacity:.65}
+.upload-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:5px}
+.upload-sub{font-size:12px;color:var(--muted)}
+.prog-bar{height:4px;background:#E9D5FF;border-radius:2px;margin-top:12px;overflow:hidden;display:none}
+.prog-fill{height:100%;background:var(--pu);border-radius:2px;transition:width .3s}
+.file-info{display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 14px;background:#F5F4FF;border:1px solid #DDD6FE;border-radius:var(--radius-sm)}
+.file-info-name{font-size:12px;font-weight:600;color:var(--pu);flex:1;text-align:left}
+.file-del-btn{padding:4px 10px;font-size:11px;font-weight:500;color:var(--red);border:1px solid #FCA5A5;border-radius:var(--radius-sm);background:#FEF2F2;cursor:pointer}
+.file-del-btn:hover{background:#FEE2E2}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--card)}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{text-align:left;padding:9px 12px;font-size:11px;font-weight:600;color:var(--muted);background:var(--warm1);border-bottom:1px solid var(--border);white-space:nowrap;text-transform:uppercase;letter-spacing:.3px}
+.tbl td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--warm1)}
+.tbl tr.ok td{background:#E8FDF4}.tbl tr.warn td{background:#FEF3C7}.tbl tr.err td{background:#FEF2F2}.tbl tr.new td{background:#EFF6FF}
+.sbadge{padding:3px 9px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap}
+.saved-badge{padding:3px 9px;border-radius:20px;font-size:10px;font-weight:600;background:#D1FAE5;color:#065F46}
+
+/* ── SALARY CARD ── */
+.sal-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px;box-shadow:var(--shadow)}
+.sal-hdr{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--warm1);border-bottom:1px solid var(--border)}
+.sal-body{padding:16px}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.fi label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.3px}
+.fi input{width:100%;padding:9px 11px;font-size:14px;font-weight:600;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--text);outline:none;text-align:right;transition:border .2s}
+.fi input:focus{border-color:var(--pu);box-shadow:0 0 0 3px #534AB715}
+.fi input.inp-l{border-color:#86EFAC;background:#F0FDF4;color:#166534}
+.fi input.inp-m{border-color:#FCA5A5;background:#FEF2F2;color:#991B1B}
+.fi input.inp-n{border-color:#FCA5A5;background:#FEF2F2;color:#991B1B}
+.fi input.inp-o{border-color:#FCD34D;background:#FEF3C7;color:#92400E}
+/* live result box */
+.live-box{background:var(--warm1);border:1px solid var(--warm2);border-radius:var(--radius);padding:14px 16px;margin:12px 0}
+.lb-row{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid var(--border)}
+.lb-row:last-child{border-bottom:none;font-weight:700;font-size:15px;padding-top:9px;margin-top:5px}
+.lb-label{color:var(--muted)}
+.lb-val{font-weight:600}
+.save-btn{width:100%;padding:11px;background:linear-gradient(135deg,var(--pu),#8E7CF0);color:#fff;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .2s;margin-top:4px;box-shadow:0 3px 10px rgba(108,92,231,.3)}
+.save-btn:hover{opacity:.9;box-shadow:0 5px 16px rgba(108,92,231,.4);transform:translateY(-1px)}
+
+/* ── SUMMARY ── */
+.top3{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--border)}
+.top3:last-child{border-bottom:none}
+.rank-num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.bar-bg{height:5px;background:var(--bg);border-radius:3px;overflow:hidden;margin-top:5px}
+.bar-fill{height:100%;border-radius:3px}
+.exp-btn{display:flex;align-items:center;gap:5px;padding:7px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--card);font-size:12px;font-weight:500;cursor:pointer;color:var(--text)}
+.exp-btn:hover{background:var(--bg)}
+
+/* ── ADD EMP ── */
+.add-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.add-grid .fi.full{grid-column:1/-1}
+.code-toggle{display:flex;border:1.5px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;margin-bottom:10px}
+.ct{flex:1;padding:8px;font-size:12px;font-weight:500;text-align:center;cursor:pointer;background:transparent;border:none;color:var(--muted);transition:all .15s}
+.ct.act{background:var(--pu);color:#fff}
+.auto-prev{background:var(--warm1);border:1px solid var(--warm2);border-radius:var(--radius-sm);padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.auto-code{font-size:22px;font-weight:700;font-family:monospace;color:var(--pu)}
+
+/* ── INFO BOX ── */
+.info-box{border:1px solid;border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;margin-bottom:12px;display:flex;align-items:flex-start;gap:8px}
+.info-box.yellow{background:#FEF3C7;border-color:#FCD34D;color:#92400E}
+.info-box.blue{background:#EFF6FF;border-color:#BFDBFE;color:#1D4ED8}
+.info-box.green{background:#F0FDF4;border-color:#86EFAC;color:#166534}
+
+/* ── COL TAGS ── */
+.col-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+.ctag{padding:3px 9px;border-radius:20px;font-size:10px;font-weight:500;border:1px solid}
+.ctag.req{background:#EFF6FF;color:#1D4ED8;border-color:#BFDBFE}
+.ctag.direct{background:#D1FAE5;color:#065F46;border-color:#6EE7B7;font-weight:700}
+.ctag.direct-m{background:#FEE2E2;color:#991B1B;border-color:#FCA5A5;font-weight:700}
+.ctag.auto{background:#F3F4F6;color:#6B7280;border-color:#D1D5DB}
+.ctag.opt{background:#FEF3C7;color:#92400E;border-color:#FCD34D}
+
+/* ── NODATA ── */
+.nodata{text-align:center;padding:32px;color:var(--muted)}
+.nodata i{font-size:36px;display:block;margin-bottom:10px;opacity:.3}
+
+/* ── EMPLOYEE LOGIN ── */
+.emp-login-wrap{max-width:360px;margin:60px auto;padding:0 16px;text-align:center}
+.emp-login-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px 28px;box-shadow:0 8px 32px rgba(120,80,40,.12)}
+.emp-login-icon{width:56px;height:56px;border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;justify-content:center}
+.emp-login-icon i{font-size:24px;color:#fff}
+
+/* ── RESPONSIVE ── */
+@media(max-width:520px){
+  .main{padding:12px 12px 24px}
+  .f2{grid-template-columns:1fr}
+  .add-grid{grid-template-columns:1fr}
+  .add-grid .fi.full{grid-column:1}
+  .sgrid{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"/>
+</head>
+<body>
+
+<!-- ════════ LOGIN PAGE ════════ -->
+<div id="pg-login" class="page active">
+  <div class="hdr">
+    <div class="logo" style="background:linear-gradient(135deg,#F39C12,#E17055)"><i class="ti ti-building-factory-2"></i></div>
+    <div><div class="hdr-title">Цалингийн систем</div><div class="hdr-sub">Кемп · 2026 &nbsp;<span id="db-chip" style="font-size:10px;color:rgba(255,200,100,.8)">● холбогдож байна...</span></div></div>
+  </div>
+  <div class="login-wrap">
+    <div class="login-card">
+      <h2>Нэвтрэх</h2>
+      <p class="login-sub">Ажилтны кодоо бичихэд мэдээлэл шууд харагдана</p>
+      <div class="fg">
+        <label>Ажилтны код</label>
+        <input class="code-inp" id="ec" type="text" placeholder="Кодоо бичнэ үү..." autocomplete="off" inputmode="numeric"/>
+      </div>
+      <div class="pv" id="pv-found">
+        <div class="pv-found-wrap">
+          <div class="pv-hdr">
+            <div class="av" id="pv-av" style="width:42px;height:42px;font-size:14px">—</div>
+            <div>
+              <div style="font-size:15px;font-weight:700" id="pv-name">—</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px" id="pv-pos">—</div>
+              <div style="font-size:10px;color:var(--pu);font-family:monospace;margin-top:3px" id="pv-code">—</div>
+            </div>
+            <div class="ok-badge"><i class="ti ti-check" style="font-size:11px"></i> Олдлоо</div>
+          </div>
+          <div class="pv-body">
+            <div class="mini-grid" id="pv-grid"></div>
+            <button class="btn-enter" id="btn-emp-login">
+              <i class="ti ti-login" style="font-size:16px"></i>
+              <span id="pv-btn">Нэвтрэх</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="pv" id="pv-miss">
+        <div class="pv-miss-wrap">
+          <div style="width:36px;height:36px;border-radius:50%;background:#FEE2E2;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-user-off" style="font-size:18px;color:var(--red)"></i></div>
+          <div><div style="font-size:13px;font-weight:600;color:var(--red)">Код олдсонгүй</div><div style="font-size:12px;color:var(--muted);margin-top:2px">Нягтлантайгаа холбоо барина уу</div></div>
+        </div>
+      </div>
+      <div class="or"><hr><span>нягтлан нэвтрэх</span><hr></div>
+      <div class="fg"><label>Нягтлангийн нэр</label><input id="nn" type="text" placeholder="Болормаа"/></div>
+      <div class="fg"><label>Нууц үг</label><input id="np" type="password" placeholder="••••••••" /></div>
+      <button class="btn-pri" style="background:var(--pu)" id="btn-ny-login">
+        <i class="ti ti-calculator" style="font-size:15px"></i> Нягтлан нэвтрэх
+      </button>
+      <div class="err" id="err"><i class="ti ti-alert-circle"></i> <span id="err-t">Алдаа</span></div>
+    </div>
+    <p class="hint">Нягтлан нууц үг: <b>12345678</b></p>
+  </div>
+</div>
+
+<!-- ════════ EMPLOYEE LOGIN (Нууц үгтэй нэвтрэх) ════════ -->
+<div id="pg-emp-login" class="page">
+  <div class="hdr">
+    <div class="logo" style="background:var(--blue)"><i class="ti ti-building-factory-2"></i></div>
+    <div><div class="hdr-title" id="el-name">—</div><div class="hdr-sub" id="el-sub">—</div></div>
+    <button class="btn-out" id="btn-back-main"><i class="ti ti-arrow-left"></i> Буцах</button>
+  </div>
+  <div class="emp-login-wrap">
+    <div class="emp-login-card">
+      <div class="emp-login-icon" id="el-av" style="background:var(--blue)"><i class="ti ti-user" style="font-size:24px;color:#fff"></i></div>
+      <div style="font-size:18px;font-weight:700;margin-bottom:4px" id="el-fullname">—</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:20px" id="el-pos">—</div>
+      <div class="fg"><label>Нууц үг (төрсөн он)</label><input id="ep" type="password" placeholder="••••" /></div>
+      <button class="btn-pri" style="background:var(--blue)" id="btn-emp-pin">
+        <i class="ti ti-login" style="font-size:15px"></i> Нэвтрэх
+      </button>
+      <div class="err" id="ep-err" style="margin-top:10px"><i class="ti ti-alert-circle"></i> <span id="ep-err-t">Нууц үг буруу</span></div>
+      <p style="font-size:11px;color:var(--muted);margin-top:16px">Анхны нууц үг: <b>1234</b> — нэвтэрсний дараа шинэ нууц үг тохируулна</p>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════ CHANGE PIN PAGE ════════ -->
+<div id="pg-change-pin" class="page" style="min-height:100vh;background:linear-gradient(150deg,#FFF8F2 0%,#E8F5F0 100%)">
+  <div class="hdr" style="background:var(--hdr-bg)">
+    <div class="logo" style="background:linear-gradient(135deg,#F39C12,#E17055)"><i class="ti ti-lock"></i></div>
+    <div><div class="hdr-title">Нууц үг тохируулах</div><div class="hdr-sub">Анхны нэвтрэлт</div></div>
+  </div>
+  <div class="emp-login-wrap">
+    <div class="emp-login-card">
+      <div class="emp-login-icon" style="background:linear-gradient(135deg,#F39C12,#E17055)">
+        <i class="ti ti-lock" style="font-size:24px;color:#fff"></i>
+      </div>
+      <div style="font-size:18px;font-weight:700;margin-bottom:4px" id="cp-name">—</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:6px">Тавтай морил! Шинэ нууц үгээ тохируулна уу.</div>
+      <div class="info-box blue" style="margin-bottom:16px;text-align:left">
+        <i class="ti ti-info-circle" style="font-size:14px;flex-shrink:0"></i>
+        <div>Дараагийн удаа энэ нууц үгээр нэвтэрнэ. Нууц үгээ мартвал нягтлантайгаа холбогдоно уу.</div>
+      </div>
+      <div class="fg">
+        <label>Шинэ нууц үг</label>
+        <input id="cp1" type="password" placeholder="Шинэ нууц үг оруулна уу" style="letter-spacing:3px"/>
+      </div>
+      <div class="fg">
+        <label>Нууц үг давтах</label>
+        <input id="cp2" type="password" placeholder="Дахин оруулна уу" style="letter-spacing:3px"/>
+      </div>
+      <div class="err" id="cp-err" style="margin-bottom:10px"></div>
+      <button class="btn-pri" style="background:linear-gradient(135deg,var(--pu),#8E7CF0)" id="btn-change-pin">
+        <i class="ti ti-check" style="font-size:15px"></i> Нууц үг хадгалах
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ EMPLOYEE PAGE ════════ -->
+<div id="pg-emp" class="page" style="min-height:100vh;background:linear-gradient(150deg,#FFF8F2 0%,#E8F5F0 100%)">
+  <div class="hdr">
+    <div class="logo" style="background:var(--blue)"><i class="ti ti-building-factory-2"></i></div>
+    <div><div class="hdr-title">Миний цалин</div><div class="hdr-sub" id="emp-sub">—</div></div>
+    <button class="btn-out" id="btn-emp-logout"><i class="ti ti-logout"></i> Гарах</button>
+  </div>
+  <div class="main" id="emp-main"></div>
+</div>
+
+<!-- ════════ NYAGTLAN PAGE ════════ -->
+<div id="pg-ny" class="page">
+  <div class="hdr">
+    <div class="logo" style="background:linear-gradient(135deg,#F39C12,#E17055)"><i class="ti ti-calculator"></i></div>
+    <div><div class="hdr-title">Нягтланы самбар</div><div class="hdr-sub" id="ny-sub">—</div></div>
+    <button class="btn-out" id="btn-ny-logout"><i class="ti ti-logout"></i> Гарах</button>
+  </div>
+  <div class="tab-row" id="ny-tabs"></div>
+  <div class="main" id="ny-main"></div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════
+// SUPABASE — raw fetch (SDK-гүй)
+// ════════════════════════════════════════════════════
+const SB_URL = "https://ovoqrtjageqnpsikykw.supabase.co";
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im92b3FydGp0YWdlcW5wc2lreWt3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5MDY2NzQsImV4cCI6MjA5NTQ4MjY3NH0.L8_mjOEsCIMUrsOFT2xG_JugfIq6OpsjCYsZ1S9Lt4c";
+
+function sbHeaders(extra){
+  return Object.assign({
+    "Content-Type":"application/json",
+    "apikey": SB_KEY,
+    "Authorization": "Bearer " + SB_KEY
+  }, extra||{});
+}
+async function sbSelect(table){
+  const r = await fetch(`${SB_URL}/rest/v1/${table}?select=*&limit=5000`, {
+    method:"GET", headers: sbHeaders()
+  });
+  if(!r.ok){ const t=await r.text(); throw new Error(table+": "+t); }
+  return r.json();
+}
+async function sbUpsert(table, data, conflict){
+  const r = await fetch(`${SB_URL}/rest/v1/${table}`, {
+    method:"POST",
+    headers: sbHeaders({"Prefer":"resolution=merge-duplicates,return=minimal"}),
+    body: JSON.stringify(data)
+  });
+  if(!r.ok){ const t=await r.text(); throw new Error(table+" upsert: "+t); }
+  return true;
+}
+
+const NY_PASS="12345678";
+const EMP_PIN="1234";
+const MONTHS=["1 сар","2 сар","3 сар","4 сар","5 сар","6 сар","7 сар","8 сар","9 сар","10 сар","11 сар","12 сар"];
+const MF=m=>({
+  "1 сар":"2026 оны 1-р сар","2 сар":"2026 оны 2-р сар","3 сар":"2026 оны 3-р сар",
+  "4 сар":"2026 оны 4-р сар","5 сар":"2026 оны 5-р сар","6 сар":"2026 оны 6-р сар",
+  "7 сар":"2026 оны 7-р сар","8 сар":"2026 оны 8-р сар","9 сар":"2026 оны 9-р сар",
+  "10 сар":"2026 оны 10-р сар","11 сар":"2026 оны 11-р сар","12 сар":"2026 оны 12-р сар"
+}[m]||m);
+const POSITIONS=["Менежер","ХАБЭА","Механик","Т/Зохицуулагч","Аж ахуй","Засвар","Оффис үйлчлэгч","Ковш Оператор","Калмар Оператор","Түлш","Галч","Туслах","Гагнуурчин","Харуул","Нярав","Д/касс","Д/Худалдагч","Гал тогоо үйлчлэгч","Ахлах тогооч","Бэлтгэгч","Ш/Тогооч","Угаагч","Г/Касс","Хоол жолооч","Үндсэн жолооч","Бэлэн жолооч"];
+const BLIST=["Цагаан хад","19-р кемп","Зам анги","Жолооч","Хотын оффис"];
+
+// In-memory cache
+let EMPS = {}, SAL = {}, DB_READY = false;
+
+// ── Toast notification ──
+function showToast(msg, type="ok"){
+  let el=document.getElementById("sb-toast");
+  if(!el){
+    el=document.createElement("div"); el.id="sb-toast";
+    el.style.cssText="position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.15)";
+    document.body.appendChild(el);
+  }
+  el.textContent=msg;
+  const bg={ok:"#D1FAE5",error:"#FEE2E2",warn:"#FEF3C7",info:"#EFF6FF"};
+  const co={ok:"#065F46",error:"#991B1B",warn:"#92400E",info:"#1D4ED8"};
+  el.style.background=bg[type]||bg.ok; el.style.color=co[type]||co.ok;
+  el.style.opacity="1"; el.style.transform="translateX(-50%) translateY(0)";
+  clearTimeout(el._t);
+  el._t=setTimeout(()=>{el.style.opacity="0";el.style.transform="translateX(-50%) translateY(10px)";},2800);
+}
+
+// ── Loading bar ──
+function setLoading(on){
+  let el=document.getElementById("sb-bar");
+  if(!el){
+    el=document.createElement("div"); el.id="sb-bar";
+    el.style.cssText="position:fixed;top:0;left:0;right:0;height:3px;z-index:9999;transition:opacity .4s;background:linear-gradient(90deg,#534AB7 0%,#1D9E75 50%,#534AB7 100%);background-size:200%;animation:sbSlide 1.2s linear infinite";
+    const st=document.createElement("style");
+    st.textContent="@keyframes sbSlide{0%{background-position:0%}100%{background-position:200%}}";
+    document.head.appendChild(st);
+    document.body.appendChild(el);
+  }
+  el.style.opacity=on?"1":"0";
+}
+
+// ── DB status chip in header ──
+function setDbStatus(state){
+  const el=document.getElementById("db-chip");
+  if(!el)return;
+  if(state==="ok"){el.textContent="● Холбогдсон";el.style.color="var(--green)";}
+  else if(state==="err"){el.textContent="● Холболтгүй";el.style.color="var(--red)";}
+  else{el.textContent="● Холбогдож байна...";el.style.color="var(--or)";}
+}
+
+// ══════════════════════════════════════
+// LOAD FROM SUPABASE
+// ══════════════════════════════════════
+async function loadFromDB(){
+  setDbStatus("wait"); setLoading(true);
+  try{
+    const [emps, sals] = await Promise.all([
+      sbSelect("employees"),
+      sbSelect("salaries")
+    ]);
+    EMPS={};
+    emps.forEach(r=>{
+      EMPS[r.code]={name:r.name||"",surname:r.surname||"",pos:r.pos||"",
+        branch:r.branch||"",phone:r.phone||"",bank:r.bank||"",
+        type:r.type||"normal",pin:r.pin||"",baseSalary:0};
+    });
+    SAL={};
+    sals.forEach(r=>{
+      if(!SAL[r.code])SAL[r.code]={};
+      SAL[r.code][r.month]={
+        gross_input:r.gross_input||0, tax_input:r.tax_input||0,
+        ded_input:r.ded_input||0,     advance:r.advance||0,
+        niit_honog:r.niit_honog||0,   hiiseh_honog:r.hiiseh_honog||0,
+        advance_by:r.advance_by||"",  saved:r.saved||false
+      };
+    });
+    DB_READY=true; setDbStatus("ok");
+  }catch(err){
+    console.error("DB load error:",err);
+    setDbStatus("err");
+    showToast("DB алдаа: "+err.message,"error");
+  }
+  setLoading(false);
+}
+
+// ── Upsert employee ──
+async function persistEmp(code){
+  const e=EMPS[code]; if(!e)return false;
+  try{
+    await sbUpsert("employees",{
+      code, name:e.name, surname:e.surname, pos:e.pos,
+      branch:e.branch, phone:e.phone||"", bank:e.bank||"",
+      type:e.type||"normal", pin:e.pin||""
+    });
+    return true;
+  }catch(err){ showToast("Ажилтан хадгалах алдаа: "+err.message,"error"); return false; }
+}
+
+// ── Upsert salary ──
+async function persistSal(code, month){
+  const s=getSal(code,month);
+  try{
+    await sbUpsert("salaries",{
+      code, month,
+      gross_input:s.gross_input||0, tax_input:s.tax_input||0,
+      ded_input:s.ded_input||0,     advance:s.advance||0,
+      niit_honog:s.niit_honog||0,   hiiseh_honog:s.hiiseh_honog||0,
+      advance_by:s.advance_by||"",  saved:s.saved||false
+    });
+    return true;
+  }catch(err){ showToast("Цалин хадгалах алдаа: "+err.message,"error"); return false; }
+}
+
+// ── Legacy persist() — batch save (saveAll дуудна) ──
+async function persist(){
+  const jobs=[];
+  Object.keys(SAL).forEach(code=>{
+    Object.keys(SAL[code]).forEach(month=>{
+      if(SAL[code][month].saved) jobs.push(persistSal(code,month));
+    });
+  });
+  await Promise.all(jobs);
+}
+
+let C={role:null,code:null,nyName:null,month:"6 сар",tab:"upload",branch:"all",codeMode:"custom",parsed:[],fileName:null};
+
+// Init — script is at end of body so DOM is ready
+function bindEvents(){
+  // Нягтлан нэвтрэх
+  document.getElementById("btn-ny-login").addEventListener("click", doNyLogin);
+  document.getElementById("btn-change-pin").addEventListener("click", doChangePin);
+  document.getElementById("cp1").addEventListener("keydown", e=>{ if(e.key==="Enter") document.getElementById("cp2").focus(); });
+  document.getElementById("cp2").addEventListener("keydown", e=>{ if(e.key==="Enter") doChangePin(); });
+  document.getElementById("np").addEventListener("keydown", e=>{ if(e.key==="Enter") doNyLogin(); });
+  document.getElementById("nn").addEventListener("keydown", e=>{ if(e.key==="Enter") doNyLogin(); });
+
+  // Ажилтан код оруулах
+  document.getElementById("ec").addEventListener("input", e=>onCode(e.target.value));
+  document.getElementById("ec").addEventListener("keydown", e=>{ if(e.key==="Enter") doEmpLogin(); });
+
+  // Товчнууд
+  document.getElementById("btn-emp-login").addEventListener("click", doEmpLogin);
+  document.getElementById("btn-emp-pin").addEventListener("click", doEmpPinLogin);
+  document.getElementById("ep").addEventListener("keydown", e=>{ if(e.key==="Enter") doEmpPinLogin(); });
+  document.getElementById("btn-back-main").addEventListener("click", backToMain);
+  document.getElementById("btn-emp-logout").addEventListener("click", logout);
+  document.getElementById("btn-ny-logout").addEventListener("click", logout);
+}
+bindEvents();
+loadFromDB();
+
+// ── helpers ──
+const fmt=n=>Math.round(n||0).toLocaleString("mn-MN")+"₮";
+const num=v=>parseInt(String(v||"").replace(/[^\d]/g,""))||0;
+const fullName=e=>`${e.name||""} ${e.surname||""}`.trim();
+const ini=e=>{const n=fullName(e);const p=n.split(" ");return(p[0][0]+(p[1]?p[1][0]:"")).toUpperCase();};
+const avStyle=c=>c.startsWith("110")?"background:#EEEDFE;color:#3C3489":c.startsWith("120")?"background:#D1FAE5;color:#065F46":"background:#DBEAFE;color:#1E40AF";
+
+// ── sal structure ──
+function getSal(c,m){
+  if(!SAL[c])SAL[c]={};
+  if(!SAL[c][m])SAL[c][m]={
+    gross_input:0,   // L: Нийт цалин — нягтлан оруулсан
+    tax_input:0,     // M: НДШС+ХОАТ — нягтлан оруулсан, ШУУД авна
+    ded_input:0,     // N: Дэлгүүр суутгал
+    advance:0,       // O: Урьдчилгаа
+    niit_honog:0,    // Нийт хоног (K)
+    hiiseh_honog:0,  // Ирсэн хоног (K)
+    advance_by:"",saved:false
+  };
+  return SAL[c][m];
+}
+function calcV(s){
+  const gross=s.gross_input||0;
+  const tax=s.tax_input||0;
+  const ded=s.ded_input||0;
+  const adv=s.advance||0;
+  const garlug=gross-tax-ded;
+  const remain=garlug-adv;
+  return{gross,tax,ded,adv,garlug,remain};
+}
+
+// ════════════════════════════════════════════════════
+// AUTH
+// ════════════════════════════════════════════════════
+function showErr(id,t){const e=document.getElementById(id);if(e){e.style.display="block";const s=e.querySelector("span");if(s)s.textContent=t;}}
+function hideErr(id){const e=document.getElementById(id);if(e)e.style.display="none";}
+
+function onCode(val){
+  const inp=document.getElementById("ec");
+  const pf=document.getElementById("pv-found");const pm=document.getElementById("pv-miss");
+  pf.classList.remove("show");pm.classList.remove("show");
+  inp.classList.remove("found","miss");
+  if(!val||val.length<3)return;
+  const e=EMPS[val.trim()];
+  if(e){
+    inp.classList.add("found");pf.classList.add("show");
+    const av=document.getElementById("pv-av");
+    av.textContent=ini(e);av.style.cssText=avStyle(val.trim())+";width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0";
+    document.getElementById("pv-name").textContent=fullName(e);
+    document.getElementById("pv-pos").textContent=e.pos+" · "+e.branch;
+    document.getElementById("pv-code").textContent="Код: "+val.trim()+(e.phone?" · "+e.phone:"");
+    document.getElementById("pv-btn").textContent=fullName(e)+"-н цалин харах";
+    const lm=MONTHS.filter(m=>getSal(val.trim(),m).saved).slice(-1)[0]||C.month;
+    const v=calcV(getSal(val.trim(),lm));
+    document.getElementById("pv-grid").innerHTML=v.gross>0?`
+      <div class="mc"><div class="ml">Нийт цалин</div><div class="mv" style="color:var(--green)">${fmt(v.gross)}</div><div style="font-size:10px;color:var(--muted)">${MF(lm)}</div></div>
+      <div class="mc"><div class="ml">Гарт олгох</div><div class="mv" style="color:var(--blue)">${fmt(v.garlug)}</div></div>
+      <div class="mc"><div class="ml">Урьдчилгаа</div><div class="mv" style="color:var(--or)">${fmt(v.adv)}</div></div>
+      <div class="mc"><div class="ml">Үлдэгдэл</div><div class="mv" style="color:${v.remain>=0?"var(--green)":"var(--red)"}">${fmt(v.remain)}</div></div>`
+      :`<div class="mc" style="grid-column:1/-1"><div class="ml" style="color:var(--or)">Цалингийн мэдээлэл нягтлан оруулаагүй байна</div></div>`;
+  } else if(val.length>=5){inp.classList.add("miss");pm.classList.add("show");}
+}
+
+// Ажилтан нэвтрэхэд нууц үг шаардана
+function doEmpLogin(){
+  const c=document.getElementById("ec").value.trim();
+  if(!EMPS[c]){showErr("err","Код олдсонгүй");return;}
+  C.code=c;
+  // Нууц үгийн дэлгэц рүү шилжих
+  const e=EMPS[c];
+  document.getElementById("el-name").textContent=fullName(e);
+  document.getElementById("el-sub").textContent=e.branch+" · "+c;
+  document.getElementById("el-fullname").textContent=fullName(e);
+  document.getElementById("el-pos").textContent=e.pos+" · "+e.branch;
+  const av=document.getElementById("el-av");
+  av.style.cssText=avStyle(c)+";width:56px;height:56px;border-radius:50%;margin:0 auto 14px;display:flex;align-items:center;justify-content:center";
+  av.innerHTML=`<div style="font-size:22px;font-weight:700">${ini(e)}</div>`;
+  document.getElementById("ep").value="";
+  document.getElementById("ep-err").style.display="none";
+  showPage("pg-emp-login");
+  setTimeout(()=>document.getElementById("ep").focus(),200);
+}
+
+function backToMain(){showPage("pg-login");}
+
+function doEmpPinLogin(){
+  const pin=document.getElementById("ep").value.trim();
+  const e=EMPS[C.code];
+  const savedPin=e&&e.pin?e.pin:EMP_PIN;
+  if(pin!==savedPin){showErr("ep-err","Нууц үг буруу байна");return;}
+  // Анхны нууц үгээр орсон бол шинэ нууц үг тохируулах
+  if(!e.pin){
+    showPage("pg-change-pin");
+    document.getElementById("cp-name").textContent=fullName(e);
+    document.getElementById("cp1").value="";
+    document.getElementById("cp2").value="";
+    document.getElementById("cp-err").style.display="none";
+    return;
+  }
+  C.role="emp";C.month="6 сар";
+  showPage("pg-emp");renderEmp();
+}
+
+
+async function doChangePin(){
+  const p1=document.getElementById("cp1").value.trim();
+  const p2=document.getElementById("cp2").value.trim();
+  const errEl=document.getElementById("cp-err");
+  if(p1.length<4){errEl.style.display="block";errEl.textContent="Нууц үг хамгийн багадаа 4 тэмдэгт байна";return;}
+  if(p1!==p2){errEl.style.display="block";errEl.textContent="Нууц үг таарахгүй байна";return;}
+  errEl.style.display="none";
+  const e=EMPS[C.code];
+  e.pin=p1;
+  setLoading(true);
+  await persistEmp(C.code);
+  setLoading(false);
+  showToast("Нууц үг амжилттай тохируулагдлаа ✓","ok");
+  C.role="emp";C.month="6 сар";
+  showPage("pg-emp");renderEmp();
+}
+async function doNyLogin(){
+  const n=document.getElementById("nn").value.trim();
+  const p=document.getElementById("np").value.trim();
+  if(!n){showErr("err","Нягтлангийн нэрийг оруулна уу");return;}
+  if(p!==NY_PASS){showErr("err","Нууц үг буруу байна");return;}
+  await loadFromDB();
+  C.role="ny";C.nyName=n;C.month="6 сар";C.tab="upload";C.branch="all";C.parsed=[];C.fileName=null;
+  showPage("pg-ny");renderNy();
+}
+function logout(){
+  C={role:null,code:null,nyName:null,month:"4 сар",tab:"upload",branch:"all",codeMode:"custom",parsed:[],fileName:null};
+  document.getElementById("ec").value="";document.getElementById("ec").classList.remove("found","miss");
+  document.getElementById("pv-found").classList.remove("show");document.getElementById("pv-miss").classList.remove("show");
+  document.getElementById("nn").value="";document.getElementById("np").value="";
+  hideErr("err");showPage("pg-login");
+}
+function showPage(id){document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));document.getElementById(id).classList.add("active");}
+
+
+// ════════════════════════════════════════════════════
+// EMPLOYEE VIEW
+// ════════════════════════════════════════════════════
+function renderEmp(){
+  const c=C.code;const e=EMPS[c];
+  document.getElementById("emp-sub").textContent=e.branch+" · "+c;
+  const mOpts=MONTHS.map(m=>`<option value="${m}"${m===C.month?" selected":""}>${MF(m)}</option>`).join("");
+  const s=getSal(c,C.month);const v=calcV(s);
+  const hasSal=s.gross_input>0||s.saved;
+
+  document.getElementById("emp-main").innerHTML=`
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;padding:16px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)">
+      <div class="av" style="${avStyle(c)};width:52px;height:52px;font-size:16px">${ini(e)}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:18px;font-weight:700">${fullName(e)}</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:2px">${e.pos} · ${e.branch}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">
+          ${e.phone?`<span style="margin-right:12px">📞 ${e.phone}</span>`:""}
+          ${e.bank?`<span>🏦 ${e.bank}</span>`:""}
+        </div>
+      </div>
+    </div>
+    <div class="ctrl-row"><label>Сар сонгох:</label><select class="ctrl" onchange="C.month=this.value;renderEmp()">${mOpts}</select></div>
+    ${!hasSal?`<div class="nodata"><i class="ti ti-clock"></i><br>${MF(C.month)}-ын цалингийн мэдээлэл нягтлан оруулаагүй байна</div>`:`
+    <div class="sgrid">
+      <div class="sg"><div class="sl">Нийт цалин</div><div class="sv" style="color:var(--green)">${fmt(v.gross)}</div></div>
+      <div class="sg"><div class="sl">НДШС+ХОАТ</div><div class="sv" style="color:var(--red)">${fmt(v.tax)}</div></div>
+      <div class="sg"><div class="sl">Дэлгүүр</div><div class="sv" style="color:var(--red)">${fmt(v.ded)}</div></div>
+      <div class="sg"><div class="sl">Гарт олгох</div><div class="sv" style="color:var(--blue)">${fmt(v.garlug)}</div></div>
+      <div class="sg"><div class="sl">Урьдчилгаа</div><div class="sv" style="color:var(--or)">${fmt(v.adv)}</div>${s.advance_by?`<div class="ss">${s.advance_by}</div>`:""}</div>
+      <div class="sg"><div class="sl">Үлдэгдэл</div><div class="sv" style="color:${v.remain>=0?"var(--green)":"var(--red)"}">${fmt(v.remain)}</div><div class="ss">2-р хагас</div></div>
+    </div>
+
+    <div style="font-size:13px;font-weight:600;margin:16px 0 8px;display:flex;align-items:center;gap:6px"><i class="ti ti-receipt-2" style="font-size:15px;color:var(--muted)"></i> Цалингийн задаргаа · ${MF(C.month)}</div>
+    <div class="card">
+      <div class="row"><span class="row-label"><i class="ti ti-currency-tugrik"></i>Нийт цалин (L)</span><span class="row-val p">+${fmt(v.gross)}</span></div>
+      ${s.niit_honog>0?`<div class="row"><span class="row-label"><i class="ti ti-calendar-check"></i>Ажилсан хоног (K)</span><span class="row-val" style="color:var(--blue)">${s.hiiseh_honog} / ${s.niit_honog} хоног</span></div>`:""}
+      <div class="row" style="background:#FEF2F218"><span class="row-label" style="color:#991B1B"><i class="ti ti-minus-circle"></i>НДШС+ХОАТ (M)</span><span class="row-val m">-${fmt(v.tax)}</span></div>
+      ${v.ded>0?`<div class="row"><span class="row-label"><i class="ti ti-shopping-cart"></i>Дэлгүүр суутгал (N)</span><span class="row-val m">-${fmt(v.ded)}</span></div>`:""}
+      <div class="total-row"><span>Гарт олгох</span><span class="total-val">${fmt(v.garlug)}</span></div>
+    </div>
+
+    <div style="font-size:13px;font-weight:600;margin:16px 0 8px;display:flex;align-items:center;gap:6px"><i class="ti ti-cash" style="font-size:15px;color:var(--muted)"></i> 15/15 олголт</div>
+    <div class="card">
+      <div class="row"><span class="row-label"><i class="ti ti-arrow-right"></i>Урьдчилгаа — 1-р хагас (O)</span><span class="row-val o">${fmt(v.adv)}${s.advance_by?` <span class="chip" style="background:#EEEDFE;color:#3C3489;font-size:10px">${s.advance_by}</span>`:""}</span></div>
+      <div class="total-row"><span>Үлдэгдэл — 2-р хагас (P)</span><span class="total-val" style="color:${v.remain>=0?"var(--blue)":"var(--red)"}">${fmt(v.remain)}</span></div>
+    </div>`}`;
+}
+
+// ════════════════════════════════════════════════════
+// NYAGTLAN
+// ════════════════════════════════════════════════════
+function renderNy(){
+  document.getElementById("ny-sub").textContent="2026 · 15/15 · "+C.nyName;
+  const tabs=[
+    {id:"upload",lbl:"Excel файл оруулах",ic:"ti-file-spreadsheet"},
+    {id:"salary",lbl:"Цалин оруулах",ic:"ti-pencil"},
+    {id:"summary",lbl:"Хураангуй",ic:"ti-chart-bar"},
+    {id:"addEmp",lbl:"Ажилтан нэмэх",ic:"ti-user-plus"},
+    {id:"dbsetup",lbl:"DB тохируулга",ic:"ti-database"}
+  ];
+  document.getElementById("ny-tabs").innerHTML=tabs.map(t=>`<div class="tab${C.tab===t.id?" act":""}" onclick="C.tab='${t.id}';renderNy()"><i class="ti ${t.ic}"></i>${t.lbl}</div>`).join("");
+  const mOpts=MONTHS.map(m=>`<option value="${m}"${m===C.month?" selected":""}>${MF(m)}</option>`).join("");
+  const brHtml=[["all","Бүгд"],["100","Кемп"],["110","Жолооч"],["120","Зам"]].map(([k,v])=>`<button class="brtab${C.branch===k?" act":""}" onclick="C.branch='${k}';renderNy()">${v}</button>`).join("");
+  let content="";
+  if(C.tab==="upload")content=renderUpload();
+  else if(C.tab==="salary")content=renderSalary();
+  else if(C.tab==="summary")content=renderSummary();
+  else if(C.tab==="dbsetup")content=renderDbSetup();
+  else content=renderAddEmp();
+  document.getElementById("ny-main").innerHTML=`
+    <div class="ctrl-row">
+      <div style="display:flex;align-items:center;gap:6px;background:#EEEDFE;padding:5px 13px;border-radius:20px;font-size:12px;font-weight:600;color:#3C3489"><i class="ti ti-user"></i>${C.nyName}</div>
+      <label style="font-size:12px;color:var(--muted);font-weight:500">Сар:</label>
+      <select class="ctrl" onchange="C.month=this.value;renderNy()">${mOpts}</select>
+      <div class="br-tabs">${brHtml}</div>
+    </div>
+    ${content}`;
+}
+
+function getBE(){return Object.keys(EMPS).filter(c=>C.branch==="all"||c.startsWith(C.branch));}
+
+// ════════════════════════════════════════════════════
+// UPLOAD TAB — зөвхөн Excel файл
+// ════════════════════════════════════════════════════
+function renderUpload(){
+  const keys=getBE();const saved=keys.filter(c=>getSal(c,C.month).saved).length;
+  const parsed=C.parsed||[];
+
+  const parseResult=parsed.length?`
+    <div style="font-size:13px;font-weight:600;margin:16px 0 8px;display:flex;align-items:center;gap:6px">
+      <i class="ti ti-table-check" style="font-size:15px;color:var(--green)"></i> Уншсан өгөгдөл — ${parsed.length} мөр
+    </div>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr>
+          <th>Код (H)</th><th>Нэр</th><th>Хоног (K)</th><th style="text-align:right">Нийт цалин (L)</th>
+          <th style="text-align:right">НДШС+ХОАТ (M)</th><th style="text-align:right">Дэлгүүр (N)</th>
+          <th style="text-align:right">Урьдчилгаа (O)</th><th style="text-align:right">Гарт олгох</th>
+          <th style="text-align:right">Үлдэгдэл (P)</th><th>Статус</th>
+        </tr></thead>
+        <tbody>${parsed.map(r=>`<tr class="${r.status}">
+          <td style="font-family:monospace;font-weight:600">${r.code}</td>
+          <td style="font-weight:500">${r.empName||"—"}</td>
+          <td style="text-align:center">${r.niit>0?`${r.hiisen||"?"}/${r.niit}`:"—"}</td>
+          <td style="text-align:right;font-weight:600">${r.gross?fmt(r.gross):"—"}</td>
+          <td style="text-align:right;color:var(--red)">${r.tax?fmt(r.tax):"—"}</td>
+          <td style="text-align:right;color:var(--red)">${r.ded?fmt(r.ded):"—"}</td>
+          <td style="text-align:right;color:var(--or)">${r.adv?fmt(r.adv):"—"}</td>
+          <td style="text-align:right;font-weight:600;color:var(--blue)">${r.garlug!=null?fmt(r.garlug):"—"}</td>
+          <td style="text-align:right;font-weight:600;color:${(r.remain||0)>=0?"var(--green)":"var(--red)"}">${r.remain!=null?fmt(r.remain):"—"}</td>
+          <td>${r.status==="new"
+            ?`<span class="sbadge" onclick="openNewEmpModal('${r.code}')" style="background:#DBEAFE;color:#1D4ED8;cursor:pointer;border:1px solid #93C5FD" title="Дарж албан тушаал нэмнэ">＋ Мэдээлэл нэмэх</span>`
+            :`<span class="sbadge" style="background:${r.status==="ok"?"#D1FAE5;color:#065F46":r.status==="warn"?"#FEF3C7;color:#92400E":"#FEE2E2;color:#991B1B"}">${r.msg}</span>`
+          }</td>
+        </tr>`).join("")}</tbody>
+      </table>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+      <button onclick="saveAll()" style="padding:10px 20px;background:var(--green);color:#fff;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px">
+        <i class="ti ti-device-floppy"></i> Бүгдийг хадгалах (${parsed.filter(r=>r.status!=="error").length} ажилтан)
+      </button>
+      <button onclick="C.parsed=[];renderNy()" style="padding:10px 16px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--card);cursor:pointer;font-size:13px;font-weight:500">Цэвэрлэх</button>
+    </div>
+    <div id="save-ok" style="display:none;background:#D1FAE5;border:1px solid #6EE7B7;border-radius:var(--radius-sm);padding:11px 14px;font-size:13px;color:#065F46;margin-top:10px"></div>`:"";
+
+  return`
+    <!-- UPLOAD ZONE -->
+    ${!C.fileName?`
+    <div class="upload-zone" id="drop-zone"
+      ondragover="event.preventDefault();this.classList.add('drag')"
+      ondragleave="this.classList.remove('drag')"
+      ondrop="onDrop(event)">
+      <input type="file" accept=".xlsx,.xls" onchange="onFileSelect(event)"/>
+      <div class="upload-icon"><i class="ti ti-file-spreadsheet"></i></div>
+      <div class="upload-title">Excel файлаа энд чирж оруулна уу</div>
+      <div class="upload-sub">эсвэл товшиж файл сонгоно · <b>.xlsx</b> · <b>.xls</b> зөвхөн</div>
+      <div class="prog-bar" id="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+    </div>`:`
+    <div class="file-info">
+      <i class="ti ti-file-spreadsheet" style="font-size:20px;color:var(--pu)"></i>
+      <div class="file-info-name">${C.fileName}</div>
+      <button class="file-del-btn" onclick="deleteFile()"><i class="ti ti-trash"></i> Устгах</button>
+    </div>`}
+
+    <!-- INFO -->
+    <div class="info-box yellow" style="margin-top:12px">
+      <i class="ti ti-info-circle" style="font-size:16px;flex-shrink:0;margin-top:1px"></i>
+      <div><b>Нягтлан оруулсан дүн шууд харагдана</b> — систем өөрийн тооцоо хийхгүй.
+      Excel-д бичсэн <b>L, M, N, O</b> баганы дүн яг тэр хэвээр хадгалагдана.</div>
+    </div>
+
+    <!-- COL LEGEND -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px"><i class="ti ti-table" style="font-size:14px;vertical-align:-2px;color:var(--muted)"></i> Excel баганы дараалал (G→P)</div>
+      <div class="col-tags">
+        <span class="ctag auto">G: №</span>
+        <span class="ctag req">H: Код ✱</span>
+        <span class="ctag auto">I: Овог</span>
+        <span class="ctag auto">J: Нэр</span>
+        <span class="ctag req">K: Хоног ✱</span>
+        <span class="ctag direct">L: Нийт цалин ← шууд авна</span>
+        <span class="ctag direct-m">M: НДШС+ХОАТ ← шууд авна</span>
+        <span class="ctag direct-m">N: Дэлгүүр ← шууд авна</span>
+        <span class="ctag opt">O: Урьдчилгаа ← шууд авна</span>
+        <span class="ctag auto">P: Үлдэгдэл (L-M-N-O)</span>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px">Хоног (K): <code style="background:var(--bg);padding:1px 5px;border-radius:4px">28/25</code> (нийт/ирсэн) эсвэл <code style="background:var(--bg);padding:1px 5px;border-radius:4px">25</code></div>
+      <button onclick="dlTemplate()" style="margin-top:10px;padding:7px 16px;background:transparent;color:var(--pu);border:1.5px solid var(--pu);border-radius:var(--radius-sm);font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:5px">
+        <i class="ti ti-download"></i> Excel загвар татах (.xlsx)
+      </button>
+    </div>
+
+    <!-- STATUS -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap">
+      <span>Нийт ажилтан: <b style="color:var(--text)">${keys.length}</b></span>
+      <span>Хадгалсан: <b style="color:var(--green)">${saved}</b></span>
+      <span>Хадгалаагүй: <b style="color:var(--or)">${keys.length-saved}</b></span>
+      <span>Сар: <b style="color:var(--pu)">${MF(C.month)}</b></span>
+    </div>
+
+    ${parseResult}
+
+    <!-- CURRENT TABLE -->
+    <div style="font-size:13px;font-weight:600;margin:16px 0 8px;display:flex;align-items:center;gap:6px">
+      <i class="ti ti-users" style="font-size:15px;color:var(--muted)"></i> Одоогийн байдал
+    </div>
+    <div class="tbl-wrap">
+      <table class="tbl" style="min-width:640px">
+        <thead><tr>
+          <th>Нэр · Код</th><th style="text-align:center">Хоног</th>
+          <th style="text-align:right">Нийт цалин (L)</th><th style="text-align:right">НДШС+ХОАТ (M)</th>
+          <th style="text-align:right">Дэлгүүр (N)</th><th style="text-align:right">Урьдчилгаа (O)</th>
+          <th style="text-align:right">Гарт олгох</th><th style="text-align:right">Үлдэгдэл (P)</th><th>Статус</th>
+        </tr></thead>
+        <tbody>${keys.map(c=>{
+          const e=EMPS[c];const s=getSal(c,C.month);const v=calcV(s);
+          return`<tr>
+            <td style="font-weight:600">${fullName(e)}<br><span style="font-size:10px;color:var(--pu);font-family:monospace">${c}</span></td>
+            <td style="text-align:center">${s.niit_honog>0?`${s.hiiseh_honog}/${s.niit_honog}`:"—"}</td>
+            <td style="text-align:right;font-weight:600">${v.gross?fmt(v.gross):"—"}</td>
+            <td style="text-align:right;color:var(--red)">${v.tax?fmt(v.tax):"—"}</td>
+            <td style="text-align:right;color:var(--red)">${v.ded?fmt(v.ded):"—"}</td>
+            <td style="text-align:right">${v.adv?`${fmt(v.adv)}<br><span style="font-size:10px;background:#EEEDFE;color:#3C3489;padding:1px 6px;border-radius:20px">${s.advance_by||""}</span>`:"—"}</td>
+            <td style="text-align:right;font-weight:600;color:var(--blue)">${v.garlug?fmt(v.garlug):"—"}</td>
+            <td style="text-align:right;font-weight:600;color:${v.remain>=0?"var(--green)":"var(--red)"}">${v.gross?fmt(v.remain):"—"}</td>
+            <td>${s.saved?`<span class="saved-badge">✓ Хадгалсан</span>`:`<span style="font-size:11px;color:var(--muted)">Оруулаагүй</span>`}</td>
+          </tr>`;
+        }).join("")}</tbody>
+      </table>
+    </div>`;
+}
+
+// ── file handling ──
+function deleteFile(){C.parsed=[];C.fileName=null;renderNy();}
+function onDrop(e){e.preventDefault();document.getElementById("drop-zone").classList.remove("drag");const f=e.dataTransfer.files[0];if(f)processFile(f);}
+function onFileSelect(e){const f=e.target.files[0];if(f)processFile(f);}
+
+function processFile(file){
+  const ext=file.name.split(".").pop().toLowerCase();
+  if(ext!=="xlsx"&&ext!=="xls"){alert("Зөвхөн .xlsx эсвэл .xls файл оруулна уу");return;}
+  C.fileName=file.name;
+  const prog=document.getElementById("prog-bar");const fill=document.getElementById("prog-fill");
+  if(prog){prog.style.display="block";fill.style.width="20%";}
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    if(fill)fill.style.width="60%";
+    try{
+      const data=new Uint8Array(ev.target.result);
+      const wb=XLSX.read(data,{type:"array"});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:""});
+      if(fill)fill.style.width="80%";
+      parseRows(rows);
+      if(fill)fill.style.width="100%";
+      setTimeout(()=>{if(prog)prog.style.display="none";renderNy();},300);
+    }catch(err){
+      if(prog)prog.style.display="none";
+      alert("Файл унших алдаа: "+err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ── parse: G=0,H=1(Код),I=2,J=3,K=4(Хоног),L=5(НийтЦалин),M=6(НДШС+ХОАТ),N=7(Дэлгүүр),O=8(Урьдчилгаа),P=9 ──
+function parseRows(rows){
+  let startRow=0;
+  for(let i=0;i<Math.min(5,rows.length);i++){
+    const r=rows[i];if(!r)continue;
+    const j=r.join(" ").toLowerCase();
+    if(j.includes("код")||j.includes("code")){startRow=i+1;break;}
+    if(r.length>=2&&/^\d{5,}$/.test(String(r[1]).trim())){startRow=i;break;}
+    if(r.length>=2&&/^\d{5,}$/.test(String(r[0]).trim())){startRow=i;break;}
+  }
+  const results=[];
+  for(let i=startRow;i<rows.length;i++){
+    const r=rows[i];if(!r||r.every(c=>!String(c).trim()))continue;
+    let code="",honog_raw="",gross=0,tax=0,ded=0,adv=0;
+    const len=r.length;
+    if(len>=9){
+      // G→P бүтэн хэлбэр
+      code=String(r[1]).trim();
+      honog_raw=String(r[4]).trim();
+      gross=num(r[5]);tax=num(r[6]);ded=num(r[7]);adv=num(r[8]);
+    } else if(len>=6){
+      code=String(r[0]).trim();
+      honog_raw=String(r[3]).trim();
+      gross=num(r[4]);tax=num(r[5]);ded=num(r[6]);adv=num(r[7])||0;
+    } else if(len>=4){
+      code=String(r[0]).trim();
+      honog_raw=String(r[1]).trim();
+      gross=num(r[2]);tax=num(r[3]);ded=num(r[4])||0;adv=num(r[5])||0;
+    } else continue;
+    if(!code||!/^\d+$/.test(code))continue;
+    // Excel-ийн овог/нэрийг авна (I=овог, J=нэр эсвэл эхний баганууд)
+    let xlsSurname="", xlsName="";
+    if(len>=9){ xlsSurname=String(r[2]||"").trim(); xlsName=String(r[3]||"").trim(); }
+    else if(len>=6){ xlsSurname=String(r[1]||"").trim(); xlsName=String(r[2]||"").trim(); }
+    else { xlsSurname=""; xlsName=String(r[1]||"").trim(); }
+
+    const emp=EMPS[code];
+    // Бүртгэлгүй бол Excel-ийн нэрийг ашиглана — гэхдээ хадгалахад автоматаар нэмнэ
+    const empName = emp ? fullName(emp) : (xlsSurname||xlsName ? `${xlsSurname} ${xlsName}`.trim() : `Код: ${code}`);
+    const fromXls = !emp; // Excel-ээс нэр авсан
+
+    // Хоног parse
+    let niit=0,hiisen=0;
+    if(String(honog_raw).includes("/")){
+      const p=String(honog_raw).split("/");
+      niit=parseInt(p[0])||0;hiisen=parseInt(p[1])||0;
+    } else {
+      hiisen=parseInt(honog_raw)||0;
+      niit=getSal(code,C.month).niit_honog||hiisen; // slash байхгүй бол тоог niit болгоно
+    }
+    const garlug=gross-tax-ded;const remain=garlug-adv;
+    let status="ok",msg="Бэлэн";
+    if(fromXls){status="new";msg="Excel-ээс";}
+    if(!gross){status="warn";msg="Нийт цалин байхгүй";}
+    results.push({code,empName,xlsSurname,xlsName,fromXls,niit,hiisen,gross,tax,ded,adv,garlug,remain,status,msg});
+  }
+  C.parsed=results;
+}
+
+async function saveAll(){
+  let cnt=0; const saves=[];
+  (C.parsed||[]).forEach(r=>{
+    if(r.status==="error")return;
+    // Бүртгэлгүй бол Excel-ийн нэрээр автоматаар нэмнэ
+    if(r.fromXls && !EMPS[r.code]){
+      EMPS[r.code]={name:r.xlsName||r.empName,surname:r.xlsSurname||"",
+        pos:"—",branch:"—",phone:"",bank:"",type:"normal",baseSalary:0};
+      saves.push(persistEmp(r.code));
+    }
+    const s=getSal(r.code,C.month);
+    s.gross_input=r.gross||0; s.tax_input=r.tax||0;
+    s.ded_input=r.ded||0;     s.advance=r.adv||0;
+    if(r.niit>0)s.niit_honog=r.niit;
+    if(r.hiisen>=0)s.hiiseh_honog=r.hiisen;
+    s.advance_by=C.nyName; s.saved=true; cnt++;
+    saves.push(persistSal(r.code,C.month));
+  });
+  setLoading(true);
+  await Promise.all(saves);
+  setLoading(false);
+  showToast(`${cnt} ажилтны цалин хадгалагдлаа ✓`,"ok");
+  C.parsed=[]; renderNy();
+  setTimeout(()=>{const ok=document.getElementById("save-ok");if(ok){ok.style.display="flex";ok.style.alignItems="center";ok.style.gap="7px";ok.innerHTML=`<i class="ti ti-check" style="font-size:16px"></i> <b>${cnt}</b> ажилтны цалин хадгалагдлаа — нягтлан: <b>${C.nyName}</b>`;}},200);
+}
+
+function dlTemplate(){
+  const keys=getBE();
+  const wb=XLSX.utils.book_new();
+  const hdr=["№","Код (H)","Овог (I)","Нэр (J)","Хоног Нийт/Ирсэн (K)","Нийт цалин (L)","НДШС+ХОАТ (M)","Дэлгүүр суутгал (N)","Урьдчилгаа (O)","Үлдэгдэл (P)"];
+  const data=[hdr];
+  keys.forEach((c,i)=>{const e=EMPS[c];data.push([i+1,c,e.surname||"",e.name||"","","","","","",""]);});
+  const ws=XLSX.utils.aoa_to_sheet(data);
+  ws["!cols"]=[{wch:4},{wch:10},{wch:14},{wch:14},{wch:16},{wch:16},{wch:16},{wch:18},{wch:14},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws,"Цалин");
+  XLSX.writeFile(wb,`цалин_загвар_${C.month.replace(" ","_")}.xlsx`);
+}
+
+// ════════════════════════════════════════════════════
+// SALARY TAB — гараар оруулах
+// ════════════════════════════════════════════════════
+function renderSalary(){
+  const keys=getBE();
+  if(!keys.length)return`<div class="nodata"><i class="ti ti-users"></i><br>Ажилтан байхгүй</div>`;
+  return`
+    <div class="info-box green">
+      <i class="ti ti-user" style="font-size:15px;flex-shrink:0"></i>
+      <div>Нягтлан: <b>${C.nyName}</b> · Хадгалахад таны нэр автоматаар тэмдэглэгдэнэ. L, M, N, O баганы дүнг шууд оруулна.</div>
+    </div>
+    ${keys.map(code=>{
+      const e=EMPS[code];const s=getSal(code,C.month);const v=calcV(s);
+      return`<div class="sal-card">
+        <div class="sal-hdr">
+          <div class="av" style="${avStyle(code)};width:36px;height:36px;font-size:12px;font-weight:700">${ini(e)}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:700">${fullName(e)}</div>
+            <div style="font-size:11px;color:var(--muted)">${e.pos} · <span style="font-family:monospace;color:var(--pu);font-weight:600">${code}</span></div>
+          </div>
+          ${s.saved?`<span class="saved-badge"><i class="ti ti-check" style="font-size:10px"></i> Хадгалсан</span>`:""}
+        </div>
+        <div class="sal-body">
+          <div class="f2">
+            <div class="fi">
+              <label>K · Нийт хоног</label>
+              <input type="number" id="kn-${code}" value="${s.niit_honog||""}" placeholder="28" oninput="liveD('${code}')" style="border-color:#93C5FD;background:#EFF6FF;color:#1D4ED8"/>
+            </div>
+            <div class="fi">
+              <label>K · Ирсэн хоног</label>
+              <input type="number" id="kh-${code}" value="${s.hiiseh_honog||""}" placeholder="25" oninput="liveD('${code}')" style="border-color:#93C5FD;background:#EFF6FF;color:#1D4ED8"/>
+            </div>
+            <div class="fi">
+              <label>L · Нийт цалин ₮</label>
+              <input type="number" id="gl-${code}" value="${s.gross_input||""}" placeholder="3,200,000" class="inp-l" oninput="liveD('${code}')"/>
+            </div>
+            <div class="fi">
+              <label>M · НДШС+ХОАТ ₮</label>
+              <input type="number" id="tm-${code}" value="${s.tax_input||""}" placeholder="860,000" class="inp-m" oninput="liveD('${code}')"/>
+            </div>
+            <div class="fi">
+              <label>N · Дэлгүүр суутгал ₮</label>
+              <input type="number" id="dn-${code}" value="${s.ded_input||""}" placeholder="370,000" class="inp-n" oninput="liveD('${code}')"/>
+            </div>
+            <div class="fi">
+              <label>O · Урьдчилгаа ₮</label>
+              <input type="number" id="ao-${code}" value="${s.advance||""}" placeholder="600,000" class="inp-o" oninput="liveD('${code}')"/>
+            </div>
+          </div>
+          <div class="live-box" id="lb-${code}">
+            <div class="lb-row"><span class="lb-label">Нийт цалин (L)</span><span class="lb-val" style="color:var(--green)" id="lbg-${code}">${v.gross?fmt(v.gross):"—"}</span></div>
+            <div class="lb-row"><span class="lb-label">Ажилсан хоног (K)</span><span class="lb-val" style="color:var(--blue)" id="lbk-${code}">${s.niit_honog>0?`${s.hiiseh_honog}/${s.niit_honog} хоног`:"—"}</span></div>
+            <div class="lb-row"><span class="lb-label" style="color:#991B1B">НДШС+ХОАТ (M)</span><span class="lb-val" style="color:var(--red)" id="lbt-${code}">${v.tax?"-"+fmt(v.tax):"—"}</span></div>
+            <div class="lb-row"><span class="lb-label" style="color:#991B1B">Дэлгүүр (N)</span><span class="lb-val" style="color:var(--red)" id="lbd-${code}">${v.ded?"-"+fmt(v.ded):"—"}</span></div>
+            <div class="lb-row"><span class="lb-label">Гарт олгох</span><span class="lb-val" style="color:var(--blue)" id="lbgl-${code}">${v.gross?fmt(v.garlug):"—"}</span></div>
+            <div class="lb-row"><span class="lb-label" style="color:var(--or)">Урьдчилгаа (O)</span><span class="lb-val" style="color:var(--or)" id="lba-${code}">${v.adv?"-"+fmt(v.adv):"—"}</span></div>
+            <div class="lb-row"><span>Үлдэгдэл (P)</span><span style="font-size:18px;font-weight:700;color:${v.remain>=0?"var(--blue)":"var(--red)"}" id="lbr-${code}">${v.gross?fmt(v.remain):"—"}</span></div>
+          </div>
+          <button class="save-btn" onclick="saveSalDirect('${code}')"><i class="ti ti-device-floppy"></i> Хадгалах — нягтлан: ${C.nyName}</button>
+        </div>
+      </div>`;
+    }).join("")}`;
+}
+
+function liveD(code){
+  const s=getSal(code,C.month);
+  s.niit_honog=num(document.getElementById("kn-"+code)?.value);
+  s.hiiseh_honog=num(document.getElementById("kh-"+code)?.value);
+  s.gross_input=num(document.getElementById("gl-"+code)?.value);
+  s.tax_input=num(document.getElementById("tm-"+code)?.value);
+  s.ded_input=num(document.getElementById("dn-"+code)?.value);
+  s.advance=num(document.getElementById("ao-"+code)?.value);
+  const v=calcV(s);
+  const set=(id,val,color)=>{const el=document.getElementById(id);if(el){el.textContent=val;if(color)el.style.color=color;}};
+  set("lbg-"+code,v.gross?fmt(v.gross):"—");
+  set("lbk-"+code,s.niit_honog>0?`${s.hiiseh_honog}/${s.niit_honog} хоног`:"—");
+  set("lbt-"+code,v.tax?"-"+fmt(v.tax):"—");
+  set("lbd-"+code,v.ded?"-"+fmt(v.ded):"—");
+  set("lbgl-"+code,v.gross?fmt(v.garlug):"—");
+  set("lba-"+code,v.adv?"-"+fmt(v.adv):"—");
+  const remEl=document.getElementById("lbr-"+code);
+  if(remEl){remEl.textContent=v.gross?fmt(v.remain):"—";remEl.style.color=v.remain>=0?"var(--blue)":"var(--red)";}
+}
+
+async function saveSalDirect(code){
+  const s=getSal(code,C.month);
+  s.niit_honog=num(document.getElementById("kn-"+code)?.value);
+  s.hiiseh_honog=num(document.getElementById("kh-"+code)?.value);
+  s.gross_input=num(document.getElementById("gl-"+code)?.value);
+  s.tax_input=num(document.getElementById("tm-"+code)?.value);
+  s.ded_input=num(document.getElementById("dn-"+code)?.value);
+  s.advance=num(document.getElementById("ao-"+code)?.value);
+  s.advance_by=C.nyName;s.saved=true;
+  setLoading(true);
+  await persistSal(code,C.month);
+  setLoading(false);
+  showToast("Хадгаллаа ✓","ok");
+  renderNy();
+}
+
+// ════════════════════════════════════════════════════
+// SUMMARY TAB
+// ════════════════════════════════════════════════════
+function renderSummary(){
+  const keys=getBE();
+  let tG=0,tT=0,tD=0,tA=0,tGL=0,tR=0;
+  keys.forEach(c=>{const v=calcV(getSal(c,C.month));tG+=v.gross;tT+=v.tax;tD+=v.ded;tA+=v.adv;tGL+=v.garlug;tR+=Math.max(0,v.remain);});
+  const top3=keys.map(c=>({c,g:calcV(getSal(c,C.month)).gross})).filter(x=>x.g>0).sort((a,b)=>b.g-a.g).slice(0,3);
+  const rk=["#F59E0B","#94A3B8","#B45309"];
+  const rows=keys.map(c=>{
+    const e=EMPS[c];const s=getSal(c,C.month);const v=calcV(s);
+    return`<tr>
+      <td style="font-weight:600">${fullName(e)}<br><span style="font-size:10px;color:var(--pu);font-family:monospace">${c}</span>${s.saved?` <span class="saved-badge" style="font-size:10px">✓</span>`:""}</td>
+      <td style="text-align:center">${s.niit_honog>0?`${s.hiiseh_honog}/${s.niit_honog}`:"—"}</td>
+      <td style="text-align:right;font-weight:600">${v.gross?fmt(v.gross):"—"}</td>
+      <td style="text-align:right;color:var(--red)">${v.tax?fmt(v.tax):"—"}</td>
+      <td style="text-align:right;color:var(--red)">${v.ded?fmt(v.ded):"—"}</td>
+      <td style="text-align:right">${v.adv?`${fmt(v.adv)}<br><span style="font-size:10px;background:#EEEDFE;color:#3C3489;padding:1px 6px;border-radius:20px">${s.advance_by||""}</span>`:"—"}</td>
+      <td style="text-align:right;font-weight:600;color:var(--blue)">${v.garlug?fmt(v.garlug):"—"}</td>
+      <td style="text-align:right;font-weight:600;color:${v.remain>=0?"var(--green)":"var(--red)"}">${v.gross?fmt(v.remain):"—"}</td>
+    </tr>`;
+  }).join("");
+  return`
+    <div class="sgrid">
+      <div class="sg"><div class="sl">Ажилтан</div><div class="sv" style="color:var(--pu)">${keys.length}</div></div>
+      <div class="sg"><div class="sl">Цалингийн сан (L)</div><div class="sv" style="color:var(--green);font-size:16px">${fmt(tG)}</div></div>
+      <div class="sg"><div class="sl">НДШС+ХОАТ (M)</div><div class="sv" style="color:var(--red);font-size:16px">${fmt(tT)}</div></div>
+      <div class="sg"><div class="sl">Дэлгүүр (N)</div><div class="sv" style="color:var(--red);font-size:16px">${fmt(tD)}</div></div>
+      <div class="sg"><div class="sl">Урьдчилгаа (O)</div><div class="sv" style="color:var(--or);font-size:16px">${fmt(tA)}</div></div>
+      <div class="sg"><div class="sl">Гарт олгох</div><div class="sv" style="color:var(--blue);font-size:16px">${fmt(tGL)}</div></div>
+      <div class="sg"><div class="sl">Үлдэгдэл (P)</div><div class="sv" style="color:var(--green);font-size:16px">${fmt(tR)}</div></div>
+    </div>
+
+    ${top3.length?`
+    <div style="font-size:13px;font-weight:600;margin:16px 0 8px;display:flex;align-items:center;gap:6px"><i class="ti ti-award" style="font-size:15px;color:var(--muted)"></i> Топ 3 · ${MF(C.month)}</div>
+    <div class="card">
+      ${top3.map((x,i)=>{const e=EMPS[x.c];return`<div class="top3">
+        <div class="rank-num" style="background:${rk[i]}22;color:${rk[i]}">${i+1}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:700">${fullName(e)}</div>
+          <div style="font-size:11px;color:var(--muted)">${e.pos}</div>
+          <div class="bar-bg"><div class="bar-fill" style="width:${Math.round(x.g/(top3[0].g||1)*100)}%;background:${rk[i]}"></div></div>
+        </div>
+        <div style="font-size:15px;font-weight:700;color:${rk[i]};margin-left:10px">${fmt(x.g)}</div>
+      </div>`;}).join("")}
+    </div>`:""}
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:16px 0 8px;flex-wrap:wrap;gap:8px">
+      <div style="font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px"><i class="ti ti-users" style="font-size:15px;color:var(--muted)"></i> Ажилтнуудын жагсаалт</div>
+      <button class="exp-btn" onclick="exportExcel()"><i class="ti ti-download"></i> Тайлан (.xlsx)</button>
+    </div>
+    <div class="tbl-wrap">
+      <table class="tbl" style="min-width:600px">
+        <thead><tr>
+          <th>Нэр · Код</th><th style="text-align:center">Хоног</th>
+          <th style="text-align:right">Нийт цалин (L)</th><th style="text-align:right">НДШС+ХОАТ (M)</th>
+          <th style="text-align:right">Дэлгүүр (N)</th><th style="text-align:right">Урьдчилгаа (O)</th>
+          <th style="text-align:right">Гарт олгох</th><th style="text-align:right">Үлдэгдэл (P)</th>
+        </tr></thead>
+        <tbody>${rows||`<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted)">Цалин оруулаагүй байна</td></tr>`}</tbody>
+      </table>
+    </div>`;
+}
+
+// ════════════════════════════════════════════════════
+// ADD EMPLOYEE TAB
+// ════════════════════════════════════════════════════
+function renderAddEmp(){
+  const all=Object.keys(EMPS).map(c=>parseInt(c)).filter(n=>!isNaN(n));
+  const auto=String((all.length?Math.max(...all):100285)+1);
+  const posOpts=POSITIONS.map(p=>`<option value="${p}">${p}</option>`).join("");
+  const brOpts=BLIST.map(b=>`<option value="${b}">${b}</option>`).join("");
+  const inp=`padding:9px 11px;font-size:13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--text);outline:none;width:100%`;
+  return`<div style="border:2px dashed var(--border);border-radius:var(--radius);padding:20px;background:var(--card)">
+    <div style="font-size:15px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:7px"><i class="ti ti-user-plus" style="font-size:18px;color:var(--pu)"></i> Шинэ ажилтан нэмэх</div>
+    <div class="add-grid">
+      <div class="fi full"><label>Овог Нэр (бүтэн нэр)</label><input type="text" id="n-full" placeholder="Баясгалан Адъяахүү" style="${inp};font-size:15px"/></div>
+      <div class="fi"><label>Ажлын байр</label><select id="n-pos" style="${inp}">${posOpts}</select></div>
+      <div class="fi"><label>Салбар</label><select id="n-br" style="${inp}">${brOpts}</select></div>
+      <div class="fi"><label>Утас</label><input type="text" id="n-ph" style="${inp}"/></div>
+      <div class="fi"><label>Банкны данс</label><input type="text" id="n-bk" style="${inp}"/></div>
+    </div>
+    <div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px">Нэвтрэх код</div>
+    <div class="code-toggle">
+      <button class="ct${C.codeMode==="custom"?" act":""}" id="ct-c" onclick="toggleCM('custom')"><i class="ti ti-pencil"></i> Өөрийн код</button>
+      <button class="ct${C.codeMode==="auto"?" act":""}" id="ct-a" onclick="toggleCM('auto')"><i class="ti ti-wand"></i> Автомат (${auto})</button>
+    </div>
+    <div id="cc" style="display:${C.codeMode==="custom"?"block":"none"};margin-bottom:12px">
+      <input type="text" id="n-code" placeholder="100XXX / 110XXX / 120XXX"
+        style="width:100%;padding:12px;font-size:18px;letter-spacing:3px;font-family:monospace;font-weight:700;border:2px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--pu);outline:none;text-align:center"/>
+      <div style="font-size:11px;color:var(--muted);margin-top:5px;text-align:center">100=Кемп · 110=Жолооч · 120=Зам анги</div>
+    </div>
+    <div id="ca" style="display:${C.codeMode==="auto"?"block":"none"};margin-bottom:12px">
+      <div class="auto-prev">
+        <div><div style="font-size:11px;color:var(--muted)">Автомат код</div><div class="auto-code">${auto}</div></div>
+        <div style="margin-left:auto;font-size:12px;color:var(--muted)">Ажилтан нэвтрэхдээ ашиглана</div>
+      </div>
+    </div>
+    <div class="info-box blue" style="margin-bottom:12px">
+      <i class="ti ti-lock" style="font-size:14px;flex-shrink:0"></i>
+      <div>Ажилтны анхны нууц үг: <b>1234</b> (нэвтэрч өөрчилж болно)</div>
+    </div>
+    <button onclick="addEmp('${auto}')" style="width:100%;padding:11px;background:var(--pu);color:#fff;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px">
+      <i class="ti ti-check"></i> Нэмэх — нэвтрэх код үүсгэх
+    </button>
+    <div id="add-ok" style="display:none;background:#D1FAE5;border:1px solid #6EE7B7;border-radius:var(--radius-sm);padding:11px 14px;font-size:13px;color:#065F46;margin-top:12px"></div>
+  </div>`;
+}
+
+function toggleCM(m){
+  C.codeMode=m;
+  const cc=document.getElementById("cc");const ca=document.getElementById("ca");
+  if(cc)cc.style.display=m==="custom"?"block":"none";
+  if(ca)ca.style.display=m==="auto"?"block":"none";
+  document.querySelectorAll(".ct").forEach((b,i)=>b.classList.toggle("act",(m==="custom"&&i===0)||(m==="auto"&&i===1)));
+}
+
+async function addEmp(auto){
+  const full=(document.getElementById("n-full")?.value||"").trim();
+  if(!full){alert("Нэрийг оруулна уу");return;}
+  const parts=full.split(/\s+/);
+  const surname=parts.length>1?parts.slice(0,-1).join(" "):parts[0];
+  const name=parts.length>1?parts[parts.length-1]:parts[0];
+  const pos=document.getElementById("n-pos")?.value;
+  const branch=document.getElementById("n-br")?.value;
+  const ph=document.getElementById("n-ph")?.value.trim();
+  const bk=document.getElementById("n-bk")?.value.trim();
+  let code=auto;
+  if(C.codeMode==="custom"){
+    code=(document.getElementById("n-code")?.value||"").trim();
+    if(!code){alert("Кодоо оруулна уу");return;}
+    if(EMPS[code]){alert("Тэр код аль хэдийн бүртгэлтэй!");return;}
+  }
+  const type=pos==="Үндсэн жолооч"?"undsen":pos==="Бэлэн жолооч"?"belen":"normal";
+  EMPS[code]={name,surname,pos,branch,phone:ph,bank:bk,type,baseSalary:0};
+  setLoading(true);
+  const saved=await persistEmp(code);
+  setLoading(false);
+  if(saved)showToast(`${full} нэмэгдлээ ✓`,"ok");
+  const okEl=document.getElementById("add-ok");
+  if(okEl){okEl.style.display="flex";okEl.style.alignItems="center";okEl.style.gap="8px";okEl.innerHTML=`<i class="ti ti-check" style="font-size:16px"></i> <b>${full}</b> нэмэгдлээ! Нэвтрэх код: <b style="font-family:monospace;font-size:15px;color:var(--pu)">${code}</b>`;}
+  setTimeout(()=>renderNy(),1800);
+}
+
+
+// ── New emp modal ──
+let _modalCode = null;
+function openNewEmpModal(code){
+  _modalCode = code;
+  const r = (C.parsed||[]).find(x=>x.code===code);
+  if(!r) return;
+  const el = document.getElementById("modal-emp-info");
+  if(el) el.textContent = `Код: ${code}  ·  ${r.empName}`;
+  // Populate selects
+  const posEl = document.getElementById("modal-pos");
+  const brEl = document.getElementById("modal-branch");
+  posEl.innerHTML = '<option value="">— сонгоно уу —</option>' +
+    POSITIONS.map(p=>`<option value="${p}">${p}</option>`).join("");
+  brEl.innerHTML = '<option value="">— сонгоно уу —</option>' +
+    BLIST.map(b=>`<option value="${b}">${b}</option>`).join("");
+  document.getElementById("modal-phone").value = "";
+  const m = document.getElementById("modal-new-emp");
+  m.style.display = "flex";
+}
+function closeModal(){
+  document.getElementById("modal-new-emp").style.display = "none";
+  _modalCode = null;
+}
+async function confirmNewEmp(){
+  const pos = document.getElementById("modal-pos").value;
+  const branch = document.getElementById("modal-branch").value;
+  const phone = document.getElementById("modal-phone").value.trim();
+  if(!pos){showToast("Албан тушаал сонгоно уу","warn"); return;}
+  if(!branch){showToast("Салбар сонгоно уу","warn"); return;}
+  const r = (C.parsed||[]).find(x=>x.code===_modalCode);
+  if(!r) return;
+  EMPS[_modalCode] = {
+    name: r.xlsName||"", surname: r.xlsSurname||"",
+    pos, branch, phone, bank:"", type:"normal", baseSalary:0
+  };
+  r.fromXls = false; r.status = "ok"; r.msg = "Бэлэн";
+  setLoading(true);
+  await persistEmp(_modalCode);
+  setLoading(false);
+  showToast(`${r.empName} нэмэгдлээ ✓`,"ok");
+  closeModal();
+  renderNy();
+}
+
+// ── DB тохируулга tab ──
+function renderDbSetup(){
+  const empCount=Object.keys(EMPS).length;
+  const salCount=Object.values(SAL).reduce((a,m)=>a+Object.keys(m).length,0);
+  const statusColor=DB_READY?"var(--green)":"var(--red)";
+  const statusText=DB_READY?`✓ Холбогдсон — ${empCount} ажилтан, ${salCount} цалингийн бичлэг`:"✗ Холбогдоогүй";
+  return`<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px">
+    <div style="font-size:15px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+      <i class="ti ti-database" style="color:var(--pu);font-size:18px"></i> Supabase тохируулга
+    </div>
+    <div class="info-box ${DB_READY?"green":"yellow"}" style="margin-bottom:16px">
+      <i class="ti ti-${DB_READY?"circle-check":"alert-circle"}" style="font-size:15px;flex-shrink:0"></i>
+      <div>Төлөв: <b style="color:${statusColor}">${statusText}</b></div>
+    </div>
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px">📋 Supabase → SQL Editor → New query → Доорхыг paste хийж Run дарна:</div>
+    <div style="background:#1a1a2e;color:#a6e3a1;font-family:monospace;font-size:11.5px;line-height:1.7;padding:16px 18px;border-radius:8px;white-space:pre;overflow-x:auto;border:1px solid #313244;margin-bottom:14px">-- Ажилтны хүснэгт
+CREATE TABLE IF NOT EXISTS employees (
+  code    TEXT PRIMARY KEY,
+  name    TEXT DEFAULT '',
+  surname TEXT DEFAULT '',
+  pos     TEXT DEFAULT '',
+  branch  TEXT DEFAULT '',
+  phone   TEXT DEFAULT '',
+  bank    TEXT DEFAULT '',
+  type    TEXT DEFAULT 'normal',
+  pin     TEXT DEFAULT ''
+);
+
+-- Цалингийн хүснэгт
+CREATE TABLE IF NOT EXISTS salaries (
+  id            BIGSERIAL PRIMARY KEY,
+  code          TEXT NOT NULL,
+  month         TEXT NOT NULL,
+  gross_input   NUMERIC DEFAULT 0,
+  tax_input     NUMERIC DEFAULT 0,
+  ded_input     NUMERIC DEFAULT 0,
+  advance       NUMERIC DEFAULT 0,
+  niit_honog    INT DEFAULT 0,
+  hiiseh_honog  INT DEFAULT 0,
+  advance_by    TEXT DEFAULT '',
+  saved         BOOLEAN DEFAULT false,
+  UNIQUE(code, month)
+);
+
+-- Хэрэв employees хүснэгт аль хэдийн байгаа бол pin баган нэмэх
+ALTER TABLE employees ADD COLUMN IF NOT EXISTS pin TEXT DEFAULT '';
+
+-- RLS унтраах (anon key ажиллахын тулд)
+ALTER TABLE employees DISABLE ROW LEVEL SECURITY;
+ALTER TABLE salaries  DISABLE ROW LEVEL SECURITY;</div>
+    <div class="info-box blue" style="margin-bottom:14px">
+      <i class="ti ti-info-circle" style="font-size:14px;flex-shrink:0"></i>
+      <div>SQL ажилласны дараа доорх товчийг дарна. Нэг удаа л тохируулна.</div>
+    </div>
+    <button onclick="loadFromDB().then(()=>{renderNy();})" style="padding:10px 20px;background:var(--pu);color:#fff;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:7px">
+      <i class="ti ti-refresh"></i> DB дахин холбох
+    </button>
+  </div>`;
+}
+
+// ── export ──
+function exportExcel(){
+  const keys=getBE();
+  const wb=XLSX.utils.book_new();
+  const rows=[["№","Код","Овог","Нэр","Нийт хоног","Ирсэн хоног","Нийт цалин (L)","НДШС+ХОАТ (M)","Дэлгүүр (N)","Гарт олгох","Урьдчилгаа (O)","Нягтлан","Үлдэгдэл (P)"]];
+  keys.forEach((c,i)=>{
+    const e=EMPS[c];const s=getSal(c,C.month);const v=calcV(s);
+    rows.push([i+1,c,e.surname||"",e.name||"",s.niit_honog||0,s.hiiseh_honog||0,v.gross,v.tax,v.ded,v.garlug,v.adv,s.advance_by||"",v.remain]);
+  });
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws["!cols"]=[{wch:4},{wch:10},{wch:14},{wch:14},{wch:11},{wch:11},{wch:14},{wch:14},{wch:14},{wch:14},{wch:14},{wch:14},{wch:14}];
+  XLSX.utils.book_append_sheet(wb,ws,"Цалин");
+  XLSX.writeFile(wb,`цалин_${C.month.replace(" ","_")}_2026.xlsx`);
+}
+</script>
+
+<!-- ── NEW EMP MODAL ── -->
+<div id="modal-new-emp" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center">
+  <div style="background:var(--card);border-radius:16px;padding:28px 24px;width:360px;max-width:calc(100vw - 32px);box-shadow:0 12px 40px rgba(0,0,0,.2)">
+    <div style="font-size:16px;font-weight:700;margin-bottom:4px;display:flex;align-items:center;gap:8px">
+      <i class="ti ti-user-plus" style="color:var(--pu)"></i> Ажилтан нэмэх
+    </div>
+    <div id="modal-emp-info" style="font-size:12px;color:var(--muted);margin-bottom:16px"></div>
+    <div class="fi" style="margin-bottom:10px">
+      <label>Албан тушаал</label>
+      <select id="modal-pos" class="ctrl" style="width:100%;padding:9px 11px;font-size:13px">
+        <option value="">— сонгоно уу —</option>
+      </select>
+    </div>
+    <div class="fi" style="margin-bottom:10px">
+      <label>Салбар</label>
+      <select id="modal-branch" class="ctrl" style="width:100%;padding:9px 11px;font-size:13px">
+        <option value="">— сонгоно уу —</option>
+      </select>
+    </div>
+    <div class="fi" style="margin-bottom:16px">
+      <label>Утас (заавал биш)</label>
+      <input id="modal-phone" type="tel" placeholder="99xxxxxx" style="width:100%;padding:9px 11px;font-size:13px;border:1.5px solid var(--border);border-radius:var(--radius-sm);outline:none"/>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button onclick="confirmNewEmp()" style="flex:1;padding:10px;background:var(--pu);color:#fff;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer">Хадгалах</button>
+      <button onclick="closeModal()" style="padding:10px 16px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:transparent;font-size:13px;cursor:pointer">Болих</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
